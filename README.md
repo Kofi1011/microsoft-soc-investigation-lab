@@ -1,38 +1,44 @@
 # Microsoft SOC Investigation Lab
 
-Hands-on lab/project work using Microsoft Sentinel, Microsoft Entra sign-in logs, and Kusto Query Language (KQL). This portfolio demonstrates investigation and detection engineering practice; it does not represent professional SOC employment or production incident response.
+A hands-on cybersecurity project using **Microsoft Sentinel**, **Microsoft Entra ID**, and **Kusto Query Language (KQL)** to investigate authentication activity and build custom detections.
 
-## Featured investigation
+## Featured project: Password-spray investigation
 
-[01 — Password spray](investigations/01-password-spray/README.md)
+[Read the investigation →](investigations/01-password-spray/README.md)
 
-Investigated a potential password spray, validated authentication outcomes, generated a Sentinel incident through a custom scheduled rule, classified the activity as **Security testing**, and tuned detection scheduling and incident grouping.
+Analyzed failed sign-ins across multiple accounts, built a scheduled detection, investigated a generated incident, and refined the rule's scheduling and alert context.
 
-| Observed outcome | Result |
+| Investigation result | Finding |
 | --- | --- |
-| Failed sign-ins | 8 |
-| Targeted users | 7 |
-| Successful authentications | 0 |
-| Detection | Custom Sentinel scheduled analytics rule |
-| Incident | Generated and investigated |
-| Classification | Security testing |
-| Tuning | Schedule aligned with lookback; IP entity mapping and related-alert grouping |
+| Failed sign-ins from the investigated source | **8** |
+| Distinct users targeted | **7** |
+| Successful authentications from that source | **0** |
+| Detection | Custom scheduled Sentinel analytics rule |
+| Incident disposition | Authorized security testing |
+| Rule tuning | 10-minute schedule and lookback, IP entity mapping, and related-alert grouping |
+
+The lab demonstrates an investigation workflow from log analysis through detection, incident review, classification, and tuning. The results apply to the investigated source and time scope.
 
 ## Skills demonstrated
 
-- KQL aggregation and authentication-outcome analysis
-- Microsoft Entra sign-in log investigation
-- Sentinel scheduled analytics rules and entity mapping
-- Incident triage, evidence interpretation, and classification
-- Detection tuning and clear investigation documentation
+- **Log analysis:** Aggregated sign-in failures and checked authentication outcomes with KQL.
+- **Detection engineering:** Created a rule for failed sign-ins against at least three users from one IP within a fixed 10-minute bin.
+- **Incident investigation:** Reviewed a Sentinel incident and distinguished authorized test activity from suspected malicious activity.
+- **Detection tuning:** Aligned scheduling with the lookback period and added entity mapping and investigation context.
+- **Technical communication:** Documented findings, evidence, decisions, and detection limitations.
 
-## Repository guide
+## Explore the work
 
-- [Investigation walkthrough](investigations/01-password-spray/README.md)
-- [KQL queries](investigations/01-password-spray/queries.kql)
-- [Incident report](investigations/01-password-spray/incident-report.md)
-- [Screenshot evidence and limitations](investigations/01-password-spray/screenshots/README.md)
+| Artifact | Purpose |
+| --- | --- |
+| [Investigation walkthrough](investigations/01-password-spray/README.md) | Approach, rule settings, and tuning decisions |
+| [KQL queries](investigations/01-password-spray/queries.kql) | Detection and investigation logic |
+| [Incident report](investigations/01-password-spray/incident-report.md) | Findings, analysis, and disposition |
+| [Validation report](investigations/01-password-spray/validation.md) | Live query checks and six detection test cases |
+| [Screenshots](investigations/01-password-spray/screenshots/README.md) | Selected evidence with captions and limitations |
 
-## Evidence and privacy
+## Project scope
 
-Results are documented from the lab conversation and reviewed screenshots. Only screenshots without exposed account identifiers, tenant/subscription IDs, or public IP addresses are included. Query examples use a documentation-only IP placeholder. This is a small authorized lab dataset, not a benchmark of production detection effectiveness.
+This repository documents **hands-on lab work**, not professional SOC employment or a production deployment. Live validation reproduced the reported authentication totals, and six synthetic detection tests passed. A measured reduction in duplicate incidents has not been established.
+
+Published evidence omits real account names, email addresses, tenant and subscription IDs, and public source IPs. Query examples use a documentation-only IP address.

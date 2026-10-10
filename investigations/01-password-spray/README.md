@@ -1,57 +1,75 @@
 # Investigation 01: Potential Password Spray
 
-**Context:** Hands-on Microsoft SOC lab/project work. Authorized security testing, not a production security incident.
+**Hands-on lab project · Microsoft Sentinel · Microsoft Entra ID · KQL**
 
-## Objective and findings
+## Objective
 
-Identify one source generating failed sign-ins across multiple Entra accounts, determine whether authentication succeeded, and carry the finding through Sentinel detection and investigation.
+Investigate failed sign-ins across multiple Entra accounts, check for successful authentication, and build a Sentinel detection that provides useful incident context.
 
-The investigated source produced **8 failed sign-ins against 7 distinct users and 0 successful authentications** in the reviewed scope. These counts describe the investigation query scope, not necessarily a single scheduled-rule time bin.
+## Findings
 
-## Workflow
+The investigated source generated **8 failed sign-ins against 7 distinct users**, with **0 successful authentications** in the reviewed scope. A custom scheduled analytics rule generated a Sentinel incident. The investigated activity was documented as authorized **Security testing**.
 
-1. Review Entra authentication records in `SigninLogs`.
-2. Aggregate failures and distinct users by source IP.
-3. Scope the investigation to the observed source and count both failed and successful sign-ins.
-4. Create a custom Sentinel scheduled analytics rule for failures against at least three distinct users.
-5. Review the generated Sentinel incident and its alert.
-6. Classify the authorized activity as **Security testing**.
-7. Tune scheduling, entity mapping, and alert grouping to reduce repeated incident creation.
+A subsequent live review reproduced the authentication totals and confirmed that the saved rule was enabled. See the [validation report](validation.md) for test results and evidence limits.
 
-## Scheduled analytics rule
+## Investigation approach
 
-| Setting | Documented configuration |
+1. Reviewed authentication records in `SigninLogs`.
+2. Aggregated failed attempts and distinct users by source IP.
+3. Filtered to the investigated source and counted both failed and successful sign-ins.
+4. Created a scheduled analytics rule to detect failures against at least three users from one source.
+5. Reviewed the generated incident and alert, then documented the authorized testing context.
+6. Refined scheduling, IP entity mapping, custom details, and related-alert grouping.
+
+## Detection logic
+
+The rule filters nonzero sign-in results, groups failures by source IP and fixed 10-minute time bin, and returns groups involving at least three distinct users.
+
+This identifies a **potential password-spray pattern**. Sign-in logs alone do not establish that one password was used across accounts or that the activity was malicious.
+
+[View the queries](queries.kql)
+
+## Rule configuration
+
+| Setting | Configuration |
 | --- | --- |
 | Name | Possible Password Spray Against Multiple Entra Users |
-| Description | Detects potential password-spray activity when a single source IP generates failed Microsoft Entra sign-ins against three or more distinct user accounts within a 10-minute window. |
 | Severity / status | Medium / Enabled |
-| Query | See query 1 in queries.kql |
 | Frequency / lookback | Every 10 minutes / last 10 minutes |
-| Threshold | More than 0 query results |
-| Event grouping | All query results into a single alert |
-| Entity mapping | IP → Address → IPAddress |
-| Custom details | FailedAttempts and TargetedUsers |
+| Detection condition | At least 3 distinct users with failed sign-ins from one IP in a fixed 10-minute bin |
+| Alert threshold | More than 0 query results |
+| Event grouping | All query results into one alert per run |
+| IP entity mapping | IP → Address → IPAddress |
+| Custom details | FailedAttempts and TargetedUsers columns |
 | Incident creation | Enabled |
-| Related-alert grouping | Enabled, match all entities, 1 hour |
+| Related-alert grouping | Match all entities within 1 hour |
 | Reopen closed incidents | Disabled |
-| Suppression / automation | Not configured |
-| ATT&CK mapping | Credential Access → T1110 → T1110.003 Password Spraying |
+| Suppression / automated response | Not configured |
+| ATT&CK mapping | Credential Access → T1110 Brute Force → T1110.003 Password Spraying |
 
-The latest pasted summary still labels the custom detail `TargetdUsers` while mapping it to the correct `TargetedUsers` column. Correcting the display label was recommended; the available evidence does not confirm that final save.
+The saved rule's status, query, schedule, lookback, severity, ATT&CK mapping, incident creation, and grouping were verified in the portal. Entity mapping, custom details, and reopening behavior are documented from the retained rule summary. That summary contains the display-label typo `TargetdUsers`, mapped to the correct `TargetedUsers` column; its final correction has not been independently verified.
 
-## Detection tuning
+## Tuning decisions
 
-Earlier evidence shows a 5-minute frequency with a 1-hour lookback. A later pasted summary shows a 5-minute frequency with a 10-minute lookback. The latest summary aligns both frequency and lookback to 10 minutes, maps the IP entity, and includes counts in custom details.
+The initial screenshot shows a 5-minute schedule with a 1-hour lookback. A later configuration used a 10-minute lookback while still running every 5 minutes. The saved rule now runs every 10 minutes with a 10-minute lookback.
 
-These changes reduce overlapping query coverage and allow grouping using the source IP. The screenshots show multiple incidents before tuning. No post-tuning measurement is available, so this project does not claim a measured reduction or elimination of duplicates.
+Aligning the interval with the lookback removes the configured overlap between consecutive query windows. IP mapping supplies an investigation entity; custom details expose the failure and user counts; related-alert grouping is intended to consolidate recurring alerts.
 
-## Interpretation and limitations
+These settings address sources of repeated detections, but the lab has no controlled before-and-after measurement of incident reduction. Grouping alerts also does not suppress rule execution.
 
-- Multiple failed accounts from one IP are a useful lead; they do not establish the password used or prove malicious password spraying.
-- The broad nonzero-result filter includes different sign-in failure reasons; investigation should examine those reasons.
-- Zero successful authentications applies to the reviewed source and time scope. It does not prove that the entire environment was uncompromised.
-- Fixed 10-minute bins can split activity at a boundary. Log ingestion delays and distributed source IPs can affect coverage.
-- The rule is a lab baseline. Thresholds and grouping require validation before production use.
-- KQL examples retain investigation logic; supplementary queries are reusable examples, not claimed historical executions.
+## Detection limitations
 
-See the [incident report](incident-report.md) and [screenshots](screenshots/README.md).
+- **Fixed bins:** Three users split across a bin boundary can fail to reach the threshold in either bin. The query does not evaluate every possible rolling 10-minute interval.
+- **Broad failure filter:** Nonzero results include different failure reasons. Further triage should inspect the result codes and descriptions.
+- **Shared or distributed sources:** A shared IP can combine unrelated users; activity spread across several IPs can remain below the per-source threshold.
+- **Scheduling and ingestion:** Equal frequency and lookback do not guarantee complete coverage when logs arrive late.
+- **Alert context:** Grouping every result into one alert can combine several qualifying IPs. Matching all entities may then group differently from a rule that creates one alert per source.
+- **Outcome scope:** Zero successes applies to the investigated source and time scope, not the entire environment.
+
+This rule is a tested lab baseline. Production use would require broader data, threshold calibration, and validation of ingestion and grouping behavior.
+
+## Evidence
+
+- [Incident report](incident-report.md)
+- [Validation report and repeatable tests](validation.md)
+- [Screenshot evidence](screenshots/README.md)

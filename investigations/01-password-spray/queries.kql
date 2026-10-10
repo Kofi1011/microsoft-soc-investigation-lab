@@ -1,6 +1,13 @@
-// Run each query separately.
-// 1. Scheduled rule: recorded lab logic.
-// Configure Sentinel to run every 10 minutes over the last 10 minutes.
+// Run each numbered query separately.
+// Required data source: Microsoft Entra sign-in records in SigninLogs.
+// Query 1 uses Sentinel's configured lookback; for manual runs, set
+// the Logs UI time range explicitly. The rule retains TimeGenerated.
+
+// 1. Saved lab detection.
+// Sentinel configuration: every 10 minutes; look back 10 minutes.
+// Nonzero ResultType comparisons match the recorded rule and were
+// executed successfully during validation.
+// This is a fixed-bin detection, not a rolling-window detection.
 SigninLogs
 | where ResultType != 0
 | summarize
@@ -10,9 +17,10 @@ SigninLogs
     by IPAddress, bin(TimeGenerated, 10m)
 | where TargetedUsers >= 3
 
-// 2. Investigation totals: adapted from the reviewed source-scoped query.
-// Replace the documentation-only IP and set the Logs UI time range
-// to the investigation window. This placeholder will not reproduce lab counts.
+// 2. Source-scoped authentication totals.
+// Replace the documentation-only IP with the source under investigation.
+// Set the Logs UI time range to the intended investigation scope.
+// The placeholder will not reproduce the original lab counts.
 let InvestigatedIP = "192.0.2.10";
 SigninLogs
 | where IPAddress == InvestigatedIP
@@ -22,8 +30,10 @@ SigninLogs
     TargetedUsers = dcount(UserPrincipalName),
     Users = make_set(UserPrincipalName)
 
-// 3. Supplementary triage example: inspect outcomes before classification.
-// This query is supplied for reuse; historical execution is not claimed.
+// 3. Detailed triage.
+// The selected fields and sorting were executed during validation.
+// Review failure reasons before interpreting nonzero results as
+// invalid-password attempts.
 let InvestigatedIP = "192.0.2.10";
 SigninLogs
 | where IPAddress == InvestigatedIP
@@ -31,5 +41,5 @@ SigninLogs
           ResultType, ResultDescription, AppDisplayName
 | order by TimeGenerated asc
 
-// Query outputs can expose personal/account data and public IPs.
-// Review and sanitize outputs before sharing.
+// Query outputs can expose real account names and public source IPs.
+// Review and sanitize outputs before publishing.

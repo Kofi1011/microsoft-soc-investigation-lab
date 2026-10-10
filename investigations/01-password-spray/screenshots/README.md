@@ -1,20 +1,33 @@
 # Screenshot Evidence
 
-Selected original screenshots were visually reviewed and contain no exposed email addresses, tenant/subscription IDs, or public IP addresses. They are copied without edits.
+These four original screenshots were reviewed for exposed email addresses, account names, tenant and subscription IDs, and public IP addresses. They are included without edits.
 
-| File | What it supports | Limitation |
-| --- | --- | --- |
-| initial-rule-settings.png | Initial scheduled rule logic, frequency, lookback, and threshold | Earlier configuration: 5 minutes / 1 hour, not the final tuned configuration |
-| sentinel-incident.png | Generated Medium Sentinel incident with one alert | Does not prove final classification |
-| repeated-incidents.png | Multiple incidents visible before tuning | Does not measure the effect of tuning |
-| classification-options.png | Security testing classification is available | Open menu; does not prove the choice was saved |
+## 1. Initial rule settings
 
-![Initial rule settings](initial-rule-settings.png)
+The initial configuration ran every 5 minutes with a 1-hour lookback. This screenshot provides the starting point for the tuning discussion; it is not the final saved configuration.
 
-![Generated Sentinel incident](sentinel-incident.png)
+![Initial scheduled rule settings](initial-rule-settings.png)
 
-![Repeated incidents before tuning](repeated-incidents.png)
+## 2. Generated Sentinel incident
 
-![Classification options](classification-options.png)
+A Medium Sentinel incident is visible with one alert. The screenshot supports incident generation, but does not show a saved classification.
 
-The results screenshot showing 8 failures, 7 users, and 0 successes was reviewed but omitted because it exposes the public source IP and account names. Other portal screenshots exposing subscription IDs or account information were also omitted. The latest tuned configuration is documented from the conversation's pasted summary.
+![Generated Medium Sentinel incident](sentinel-incident.png)
+
+## 3. Repeated incidents before tuning
+
+The incident list shows multiple Medium incidents during the lab. This supports the decision to review scheduling and grouping. It does not measure any improvement after tuning.
+
+![Multiple incidents visible during the lab](repeated-incidents.png)
+
+## 4. Classification options
+
+The menu includes Security testing under informational, expected activity. This shows the available classification path; the open menu does not prove that the choice was saved.
+
+![Security testing classification option](classification-options.png)
+
+## Privacy and evidence limits
+
+The original authentication-total screenshot was reviewed privately and omitted because it exposes the public source IP and user principal names. Its counts—8 failures, 7 users, and 0 successes—were reproduced during live validation.
+
+Portal screenshots containing account information or subscription IDs were also omitted. The [validation report](../validation.md) records checks of the saved rule and explains which details were independently verified.

@@ -1,0 +1,34 @@
+// Synthetic validation fixture. Run this entire file as one query.
+// No data ingestion or incident creation occurs.
+let TestLogs = datatable(CaseName:string, IPAddress:string, UserPrincipalName:string, TimeGenerated:datetime, ResultType:string)
+[
+"three_users","192.0.2.1","a",datetime(2026-01-01 00:01:00),"50126",
+"three_users","192.0.2.1","b",datetime(2026-01-01 00:02:00),"50126",
+"three_users","192.0.2.1","c",datetime(2026-01-01 00:03:00),"50126",
+"two_users","192.0.2.2","a",datetime(2026-01-01 00:01:00),"50126",
+"two_users","192.0.2.2","b",datetime(2026-01-01 00:02:00),"50126",
+"repeated_user","192.0.2.3","a",datetime(2026-01-01 00:01:00),"50126",
+"repeated_user","192.0.2.3","a",datetime(2026-01-01 00:02:00),"50126",
+"repeated_user","192.0.2.3","a",datetime(2026-01-01 00:03:00),"50126",
+"success_excluded","192.0.2.4","a",datetime(2026-01-01 00:01:00),"50126",
+"success_excluded","192.0.2.4","b",datetime(2026-01-01 00:02:00),"50126",
+"success_excluded","192.0.2.4","c",datetime(2026-01-01 00:03:00),"0",
+"separate_sources","192.0.2.5","a",datetime(2026-01-01 00:01:00),"50126",
+"separate_sources","192.0.2.5","b",datetime(2026-01-01 00:02:00),"50126",
+"separate_sources","192.0.2.6","c",datetime(2026-01-01 00:03:00),"50126",
+"bin_boundary","192.0.2.7","a",datetime(2026-01-01 00:09:00),"50126",
+"bin_boundary","192.0.2.7","b",datetime(2026-01-01 00:09:30),"50126",
+"bin_boundary","192.0.2.7","c",datetime(2026-01-01 00:10:00),"50126"
+];
+let Expected = datatable(CaseName:string, ExpectedDetections:long)
+["three_users",1,"two_users",0,"repeated_user",0,"success_excluded",0,"separate_sources",0,"bin_boundary",0];
+let Actual = TestLogs
+| where ResultType != 0
+| summarize FailedAttempts=count(), TargetedUsers=dcount(UserPrincipalName), Users=make_set(UserPrincipalName) by CaseName, IPAddress, bin(TimeGenerated,10m)
+| where TargetedUsers >= 3
+| summarize ActualDetections=count() by CaseName;
+Expected
+| join kind=leftouter Actual on CaseName
+| extend ActualDetections=coalesce(ActualDetections, tolong(0))
+| project CaseName, ExpectedDetections, ActualDetections, Passed=ExpectedDetections == ActualDetections
+| order by CaseName asc
