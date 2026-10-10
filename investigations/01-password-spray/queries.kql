@@ -1,0 +1,35 @@
+// Run each query separately.
+// 1. Scheduled rule: recorded lab logic.
+// Configure Sentinel to run every 10 minutes over the last 10 minutes.
+SigninLogs
+| where ResultType != 0
+| summarize
+    FailedAttempts = count(),
+    TargetedUsers = dcount(UserPrincipalName),
+    Users = make_set(UserPrincipalName)
+    by IPAddress, bin(TimeGenerated, 10m)
+| where TargetedUsers >= 3
+
+// 2. Investigation totals: adapted from the reviewed source-scoped query.
+// Replace the documentation-only IP and set the Logs UI time range
+// to the investigation window. This placeholder will not reproduce lab counts.
+let InvestigatedIP = "192.0.2.10";
+SigninLogs
+| where IPAddress == InvestigatedIP
+| summarize
+    FailedAttempts = countif(ResultType != 0),
+    SuccessfulAttempts = countif(ResultType == 0),
+    TargetedUsers = dcount(UserPrincipalName),
+    Users = make_set(UserPrincipalName)
+
+// 3. Supplementary triage example: inspect outcomes before classification.
+// This query is supplied for reuse; historical execution is not claimed.
+let InvestigatedIP = "192.0.2.10";
+SigninLogs
+| where IPAddress == InvestigatedIP
+| project TimeGenerated, UserPrincipalName, IPAddress,
+          ResultType, ResultDescription, AppDisplayName
+| order by TimeGenerated asc
+
+// Query outputs can expose personal/account data and public IPs.
+// Review and sanitize outputs before sharing.
